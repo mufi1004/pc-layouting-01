@@ -27,7 +27,7 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
 
   return (
     <div className="card-thumb live-crop-card">
-      {/* Area Gambar yang Bisa Langsung Di-drag Adjust */}
+      {/* Area Gambar Live Crop */}
       <div className="cropper-inline-wrap">
         <Cropper
           image={photo.src}
@@ -38,9 +38,13 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
           onZoomChange={setZoom}
           onCropComplete={handleCropComplete}
           showGrid={false}
+          classes={{
+            containerClassName: 'custom-cropper-container',
+            cropAreaClassName: 'custom-crop-area'
+          }}
         />
         
-        {/* Tombol Hapus Cepat Silang (x) */}
+        {/* Tombol Hapus Silang */}
         <button 
           className="inline-delete-btn" 
           onClick={(e) => {
@@ -52,8 +56,12 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
         </button>
       </div>
 
-      {/* Slider Zoom Tepat di Bawah Gambar */}
-      <div className="inline-zoom-slider">
+      {/* Bagian Slider Zoom - Ditambahkan stopPropagation agar tidak menggeser kartu */}
+      <div 
+        className="inline-zoom-slider"
+        draggable={false}
+        onDragStart={(e) => e.stopPropagation()} 
+      >
         <input
           type="range"
           min={1}
