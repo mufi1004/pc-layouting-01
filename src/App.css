@@ -469,45 +469,63 @@ h3::before {
   cursor: pointer;
 }
 
-/* --- INLINE DIRECT ADJUST STYLE --- */
+ /* --- LIVE GRID CROP STYLING FIXED --- */
+
+.grid-item-wrapper {
+  width: 100%;
+}
 
 .live-crop-card {
   display: flex;
   flex-direction: column;
   background: #ffffff;
-  padding: 6px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  padding: 8px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
-/* Memastikan area live crop mengikuti dimensi photocard */
+/* Mengunci ukuran pembungkus agar 100% konsisten berasio photocard */
 .cropper-inline-wrap {
   position: relative;
   width: 100%;
   aspect-ratio: 5 / 7; 
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
-/* Styling slider zoom tipis modern tepat di bawah kotak */
+/* Menghilangkan paksa background abu-abu bawaan library */
+.custom-cropper-container {
+  background-color: #f1f5f9 !important;
+}
+
+/* Menghilangkan overlay bayangan abu-abu gelap agar fit pas visual kotak */
+.custom-crop-area {
+  box-shadow: none !important; /* Menghapus topeng abu-abu di luar kotak */
+  border: 2px solid #4f46e5 !important; /* Memberikan border tipis ungu yang rapi */
+  border-radius: 8px;
+}
+
+/* Slider Zoom */
 .inline-zoom-slider {
-  padding: 8px 4px 2px 4px;
+  padding: 10px 4px 2px 4px;
   display: flex;
   align-items: center;
+  cursor: default;
 }
 
 .inline-zoom-slider input[type="range"] {
   width: 100%;
-  height: 4px;
+  height: 5px;
   accent-color: #4f46e5;
   background: #cbd5e1;
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-/* Tombol hapus silang instan di pojok kanan atas gambar */
+/* Tombol Hapus */
 .inline-delete-btn {
   position: absolute;
   top: 6px;
@@ -525,10 +543,7 @@ h3::before {
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: background 0.2s, transform 0.2s;
 }
-
 .inline-delete-btn:hover {
   background: #ef4444;
-  transform: scale(1.1);
 }
