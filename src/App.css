@@ -462,7 +462,7 @@ h3::before {
   cursor: pointer;
 }
 
- /* --- LIVE GRID CROP STYLING CLEAN (FIXED RASIO & BORDER) --- */
+/* --- LIVE GRID CROP STYLING CLEAN (FIXED RASIO & BORDER) --- */
 
 .grid-item-wrapper {
   width: 100%;
@@ -473,7 +473,7 @@ h3::before {
   flex-direction: column;
   background: #ffffff;
   padding: 4px;
-  border-radius: 6px; /* Tidak terlalu bulat, pas presisi cetak */
+  border-radius: 6px; /* Tipis profesional, tidak terlalu bulat */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #cbd5e1; /* Border luar tipis rapi */
   box-sizing: border-box;
@@ -484,7 +484,7 @@ h3::before {
   position: relative;
   width: 100%;
   aspect-ratio: 2 / 3; 
-  border-radius: 4px; /* Sudut tajam proporsional */
+  border-radius: 4px; 
   overflow: hidden;
   background: #f8fafc;
 }
@@ -494,15 +494,15 @@ h3::before {
   background-color: #f1f5f9 !important;
 }
 
-/* Garis potong pas mengikuti kotak tanpa overlay abu */
+/* Area potong dibuat fit penuh 100% mengikuti kontainer */
 .custom-crop-area {
   width: 100% !important;
   height: 100% !important;
   top: 0 !important;
   left: 0 !important;
   transform: none !important;
-  box-shadow: none !important; /* Hapus abu-abu total */
-  border: 1px solid #4f46e5 !important; /* Border ungu super tipis sebagai penanda area cetak */
+  box-shadow: none !important; /* Hilangkan bayangan abu-abu */
+  border: 1px solid #4f46e5 !important; /* Border ungu super tipis penanda potong */
   border-radius: 4px;
 }
 
@@ -525,7 +525,6 @@ h3::before {
   cursor: pointer;
   z-index: 10;
 }
-
 .inline-delete-btn:hover {
   background: #ef4444;
 }
