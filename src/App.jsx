@@ -32,14 +32,19 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
         <Cropper
           image={photo.src}
           crop={crop}
-          zoom={1} /* Mengunci zoom di posisi default 1x */
-          zoomWithScroll={false} /* Mematikan zoom via scroll mouse */
+          zoom={1} 
+          zoomWithScroll={false} 
           showGrid={false}
           aspect={PC_ASPECT}
           onCropChange={setCrop}
           onCropComplete={handleCropComplete}
+          
+          /* ⬇️ DUA PROPERTI KUNCI AGAR GAMBAR MENTOK PAS DAN MEMENUHI KOTAK ⬇️ */
+          restrictPosition={true} // Mengunci agar geseran tidak lepas dari batas tepi gambar
+          minZoom={1} // Memaksa gambar minimal berukuran pas memenuhi area (cover)
+          
           style={{
-            shadingStyle: { display: 'none' }, /* Menghilangkan overlay abu-abu */
+            shadingStyle: { display: 'none' }, 
           }}
           classes={{
             containerClassName: 'custom-cropper-container',
