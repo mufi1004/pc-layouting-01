@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import './App.css';
-import CropModal from './CropModal';
-import { getCroppedImage, getDefaultCropPixels } from './cropImage';
+import Cropper from 'react-easy-crop'; // Menggunakan cropper langsung di grid
+import { getCroppedImage } from './cropImage';
 import { generatePdf } from './pdfGenerator';
 import { CARD_ASPECT, PER_PAGE, COLS, ROWS, FIXED_CODE } from './constants';
 
@@ -16,15 +16,58 @@ function readFileAsDataUrl(file) {
   });
 }
 
-function loadImage(src) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.src = src;
-  });
+// Komponen Satuan Item Foto agar state crop & zoom terisolasi (Mencegah Crash/Blank)
+function LiveCropItem({ photo, onRemove, onCropChange }) {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+
+  const handleCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
+    onCropChange(photo.id, croppedAreaPixels);
+  }, [photo.id, onCropChange]);
+
+  return (
+    <div className="card-thumb live-crop-card">
+      {/* Area Gambar yang Bisa Langsung Di-drag Adjust */}
+      <div className="cropper-inline-wrap">
+        <Cropper
+          image={photo.src}
+          crop={crop}
+          zoom={zoom}
+          aspect={CARD_ASPECT}
+          onCropChange={setCrop}
+          onZoomChange={setZoom}
+          onCropComplete={handleCropComplete}
+          showGrid={false}
+        />
+        
+        {/* Tombol Hapus Cepat Silang (x) */}
+        <button 
+          className="inline-delete-btn" 
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(photo.id);
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Slider Zoom Tepat di Bawah Gambar */}
+      <div className="inline-zoom-slider">
+        <input
+          type="range"
+          min={1}
+          max={3}
+          step={0.01}
+          value={zoom}
+          onChange={(e) => setZoom(Number(e.target.value))}
+        />
+      </div>
+    </div>
+  );
 }
 
-function PhotoGrid({ photos, setPhotos, onEdit }) {
+function PhotoGrid({ photos, setPhotos, onCropChange }) {
   const dragIndex = useRef(null);
 
   const removePhoto = (id) => {
@@ -68,26 +111,17 @@ function PhotoGrid({ photos, setPhotos, onEdit }) {
                 return (
                   <div
                     key={photo.id}
-                    className="card-thumb"
+                    className="grid-item-wrapper"
                     draggable
                     onDragStart={() => handleDragStart(globalIndex)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(globalIndex)}
-                    onClick={() => onEdit(photo)} /* Klik area foto langsung memicu fungsi crop */
-                    style={{ cursor: 'pointer' }}
                   >
-                    <img src={photo.croppedSrc} alt="" />
-                    
-                    {/* Mengganti hover menu dengan tombol hapus kecil instan di pojok kanan atas */}
-                    <button 
-                      className="inline-delete-btn" 
-                      onClick={(e) => {
-                        e.stopPropagation(); // Mencegah modal crop terbuka saat klik tombol hapus
-                        removePhoto(photo.id);
-                      }}
-                    >
-                      ×
-                    </button>
+                    <LiveCropItem 
+                      photo={photo} 
+                      onRemove={removePhoto} 
+                      onCropChange={onCropChange}
+                    />
                   </div>
                 );
               })}
@@ -107,8 +141,6 @@ export default function App() {
 
   const [frontPhotos, setFrontPhotos] = useState([]);
   const [backPhotos, setBackPhotos] = useState([]);
-  const [editingPhoto, setEditingPhoto] = useState(null);
-  const [editingSide, setEditingSide] = useState('front');
   const [generating, setGenerating] = useState(false);
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
@@ -117,11 +149,9 @@ export default function App() {
     const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
     for (const file of files) {
       const src = await readFileAsDataUrl(file);
-      const img = await loadImage(src);
-      const defaultPixels = getDefaultCropPixels(img.naturalWidth, img.naturalHeight, CARD_ASPECT);
-      const croppedSrc = await getCroppedImage(src, defaultPixels);
       const id = nextId++;
-      setPhotos((prev) => [...prev, { id, src, croppedSrc }]);
+      // Daftarkan image dengan areaPixels awal null (akan terisi otomatis saat render)
+      setPhotos((prev) => [...prev, { id, src, areaPixels: null }]);
     }
   };
 
@@ -135,16 +165,12 @@ export default function App() {
     e.target.value = '';
   };
 
-  const savedCrop = (id, dataUrl) => {
-    const setPhotos = editingSide === 'front' ? setFrontPhotos : setBackPhotos;
-    setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, croppedSrc: dataUrl } : p)));
-    setEditingPhoto(null);
-  };
-
-  const openEdit = (side, photo) => {
-    setEditingSide(side);
-    setEditingPhoto(photo);
-  };
+  const handleCropChange = useCallback((id, side, croppedAreaPixels) => {
+    const setPhotos = side === 'front' ? setFrontPhotos : setBackPhotos;
+    setPhotos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, areaPixels: croppedAreaPixels } : p))
+    );
+  }, []);
 
   const buildFilename = () => {
     const spkPart = spk ? `#${spk.replace(/^#/, '')}` : '#-';
@@ -158,12 +184,29 @@ export default function App() {
     if (frontPhotos.length === 0) return;
     setGenerating(true);
     try {
+      // Proses pemotongan gambar dilakukan secara background tepat sebelum di-generate ke PDF
+      const processImages = async (photos) => {
+        return Promise.all(
+          photos.map(async (p) => {
+            if (p.areaPixels) {
+              return await getCroppedImage(p.src, p.areaPixels);
+            }
+            return p.src;
+          })
+        );
+      };
+
+      const finalFront = await processImages(frontPhotos);
+      const finalBack = await processImages(backPhotos);
+
       await generatePdf({
-        frontImages: frontPhotos.map((p) => p.croppedSrc),
-        backImages: backPhotos.map((p) => p.croppedSrc),
+        frontImages: finalFront,
+        backImages: finalBack,
         twoSided: sides === '2',
         filename: buildFilename(),
       });
+    } catch (err) {
+      console.error(err);
     } finally {
       setGenerating(false);
     }
@@ -175,7 +218,7 @@ export default function App() {
     <div className="app">
       <header>
         <h1>Photocard Layouting</h1>
-        <p>Upload foto, atur crop, dan download PDF siap cetak (5x5 per halaman, 6x9cm).</p>
+        <p>Upload foto, langsung geser posisi dan sesuaikan zoom di lembar grid, lalu download PDF.</p>
       </header>
 
       <div className="form-card">
@@ -242,7 +285,7 @@ export default function App() {
             style={{ display: 'none' }}
           />
           <p>Klik untuk upload foto sisi belakang</p>
-          <p className="hint">Urutan otomatis di-mirror (kanan ke kiri) saat di-PDF supaya sejajar dengan sisi depan.</p>
+          <p className="hint">Urutan otomatis di-mirror saat di-PDF supaya sejajar dengan sisi depan.</p>
         </div>
       )}
 
@@ -254,28 +297,28 @@ export default function App() {
               {sides === '2' ? ` · ${backPhotos.length} foto belakang` : ''} — {totalPages} halaman
             </span>
             <button className="primary" onClick={handleGenerate} disabled={generating}>
-              {generating ? 'Membuat PDF...' : 'Download PDF'}
+              {generating ? 'Memproses Gambar & PDF...' : 'Download PDF'}
             </button>
           </div>
 
           <h3>Sisi Depan</h3>
-          <PhotoGrid photos={frontPhotos} setPhotos={setFrontPhotos} onEdit={(p) => openEdit('front', p)} />
+          <PhotoGrid 
+            photos={frontPhotos} 
+            setPhotos={setFrontPhotos} 
+            onCropChange={(id, pixels) => handleCropChange(id, 'front', pixels)} 
+          />
 
           {sides === '2' && backPhotos.length > 0 && (
             <>
               <h3>Sisi Belakang</h3>
-              <PhotoGrid photos={backPhotos} setPhotos={setBackPhotos} onEdit={(p) => openEdit('back', p)} />
+              <PhotoGrid 
+                photos={backPhotos} 
+                setPhotos={setBackPhotos} 
+                onCropChange={(id, pixels) => handleCropChange(id, 'back', pixels)} 
+              />
             </>
           )}
         </>
-      )}
-
-      {editingPhoto && (
-        <CropModal
-          photo={editingPhoto}
-          onCancel={() => setEditingPhoto(null)}
-          onSave={savedCrop}
-        />
       )}
     </div>
   );
