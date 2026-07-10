@@ -21,6 +21,8 @@ function readFileAsDataUrl(file) {
 
 function LiveCropItem({ photo, onRemove, onCropChange }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
+  // Biarkan state zoom aktif agar library bisa menghitung batas minimal 'cover' secara otomatis
+  const [zoom, setZoom] = useState(1); 
 
   const handleCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
     onCropChange(photo.id, croppedAreaPixels);
@@ -32,19 +34,18 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
         <Cropper
           image={photo.src}
           crop={crop}
-          zoom={1} 
-          zoomWithScroll={false} 
-          showGrid={false}
+          zoom={zoom}
           aspect={PC_ASPECT}
           onCropChange={setCrop}
+          onZoomChange={setZoom} // Mengizinkan auto-zoom untuk mode cover
           onCropComplete={handleCropComplete}
+          showGrid={false}
           
-          /* ⬇️ DUA PROPERTI KUNCI AGAR GAMBAR MENTOK PAS DAN MEMENUHI KOTAK ⬇️ */
-          restrictPosition={true} // Mengunci agar geseran tidak lepas dari batas tepi gambar
-          minZoom={1} // Memaksa gambar minimal berukuran pas memenuhi area (cover)
+          // KUNCI UTAMA: Mengunci posisi agar saat digeser tidak akan pernah bocor putih
+          restrictPosition={true} 
           
           style={{
-            shadingStyle: { display: 'none' }, 
+            shadingStyle: { display: 'none' }, // Menghilangkan overlay abu-abu gelap
           }}
           classes={{
             containerClassName: 'custom-cropper-container',
