@@ -1,9 +1,12 @@
 import { useState, useRef, useCallback } from 'react';
 import './App.css';
-import Cropper from 'react-easy-crop'; // Menggunakan cropper langsung di grid
+import Cropper from 'react-easy-crop'; 
 import { getCroppedImage } from './cropImage';
 import { generatePdf } from './pdfGenerator';
-import { CARD_ASPECT, PER_PAGE, COLS, ROWS, FIXED_CODE } from './constants';
+import { PER_PAGE, COLS, ROWS, FIXED_CODE } from './constants';
+
+// Rasio presisi Photocard 6x9 cm (2:3 atau 0.6666)
+const PC_ASPECT = 6 / 9;
 
 let nextId = 1;
 
@@ -16,10 +19,8 @@ function readFileAsDataUrl(file) {
   });
 }
 
-// Komponen Satuan Item Foto agar state crop & zoom terisolasi (Mencegah Crash/Blank)
 function LiveCropItem({ photo, onRemove, onCropChange }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
 
   const handleCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
     onCropChange(photo.id, croppedAreaPixels);
@@ -27,17 +28,19 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
 
   return (
     <div className="card-thumb live-crop-card">
-      {/* Area Gambar Live Crop */}
       <div className="cropper-inline-wrap">
         <Cropper
           image={photo.src}
           crop={crop}
-          zoom={zoom}
-          aspect={CARD_ASPECT}
-          onCropChange={setCrop}
-          onZoomChange={setZoom}
-          onCropComplete={handleCropComplete}
+          zoom={1} /* Mengunci zoom di posisi default 1x */
+          zoomWithScroll={false} /* Mematikan zoom via scroll mouse */
           showGrid={false}
+          aspect={PC_ASPECT}
+          onCropChange={setCrop}
+          onCropComplete={handleCropComplete}
+          style={{
+            shadingStyle: { display: 'none' }, /* Menghilangkan overlay abu-abu */
+          }}
           classes={{
             containerClassName: 'custom-cropper-container',
             cropAreaClassName: 'custom-crop-area'
@@ -54,61 +57,6 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
         >
           ×
         </button>
-      </div>
-
-      function LiveCropItem({ photo, onRemove, onCropChange }) {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-
-  const handleCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
-    onCropChange(photo.id, croppedAreaPixels);
-  }, [photo.id, onCropChange]);
-
-  // Fungsi memperbesar / memperkecil manual via tombol
-  const zoomIn = (e) => {
-    e.stopPropagation();
-    setZoom((prev) => Math.min(prev + 0.25, 3));
-  };
-
-  const zoomOut = (e) => {
-    e.stopPropagation();
-    setZoom((prev) => Math.max(prev - 0.25, 1));
-  };
-
-  return (
-    <div className="card-thumb live-crop-card">
-      <div className="cropper-inline-wrap">
-        <Cropper
-          image={photo.src}
-          crop={crop}
-          zoom={zoom}
-          aspect={CARD_ASPECT}
-          onCropChange={setCrop}
-          onZoomChange={setZoom}
-          onCropComplete={handleCropComplete}
-          showGrid={false}
-          classes={{
-            containerClassName: 'custom-cropper-container',
-            cropAreaClassName: 'custom-crop-area'
-          }}
-        />
-        
-        <button 
-          className="inline-delete-btn" 
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove(photo.id);
-          }}
-        >
-          ×
-        </button>
-      </div>
-
-      {/* Kontrol Tombol Mini */}
-      <div className="inline-btn-zoom-controls" onDragStart={(e) => e.stopPropagation()}>
-        <button type="button" onClick={zoomOut}>-</button>
-        <span className="zoom-val">{Math.round(zoom * 100)}%</span>
-        <button type="button" onClick={zoomIn}>+</button>
       </div>
     </div>
   );
@@ -197,7 +145,6 @@ export default function App() {
     for (const file of files) {
       const src = await readFileAsDataUrl(file);
       const id = nextId++;
-      // Daftarkan image dengan areaPixels awal null (akan terisi otomatis saat render)
       setPhotos((prev) => [...prev, { id, src, areaPixels: null }]);
     }
   };
@@ -231,7 +178,6 @@ export default function App() {
     if (frontPhotos.length === 0) return;
     setGenerating(true);
     try {
-      // Proses pemotongan gambar dilakukan secara background tepat sebelum di-generate ke PDF
       const processImages = async (photos) => {
         return Promise.all(
           photos.map(async (p) => {
@@ -265,7 +211,7 @@ export default function App() {
     <div className="app">
       <header>
         <h1>Photocard Layouting</h1>
-        <p>Upload foto, langsung geser posisi dan sesuaikan zoom di lembar grid, lalu download PDF.</p>
+        <p>Upload foto, langsung geser posisi di lembar grid, lalu download PDF.</p>
       </header>
 
       <div className="form-card">
