@@ -35,15 +35,14 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
           crop={crop}
           zoom={zoom}
           onZoomChange={setZoom}
-          aspect={6 / 9} /* Rasio 6:9 presisi photocard */
+          aspect={6 / 9} /* Rasio presisi standar photocard */
           onCropChange={setCrop}
           onCropComplete={handleCropComplete}
           showGrid={false}
           
-          /* ⬇️ TIGA PROPERTI KUNCI AGAR OTOMATIS COVER & TERKUNCI ⬇️ */
-          objectFit="cover"       // KUNCI UTAMA: Memaksa gambar langsung penuh memotong kotak sejak awal
-          restrictPosition={true} // Mencegah gambar digeser bablas keluar batas kotak
-          minZoom={1}             // Memastikan zoom tidak mengecil di bawah batas aman
+          /* KUNCI UTAMA AMAN DARI PUTIH-PUTIH */
+          objectFit="cover"       // Memaksa gambar otomatis penuh menutup kotak sejak awal upload
+          restrictPosition={true} // Mengunci agar geseran tidak bisa bablas keluar dari tepi gambar
           
           style={{
             shadingStyle: { display: 'none' }, // Menghilangkan bayangan abu-abu gelap bawaan
