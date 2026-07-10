@@ -35,21 +35,22 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
           crop={crop}
           zoom={zoom}
           onZoomChange={setZoom}
-          aspect={6 / 9} /* Rasio presisi standar photocard */
+          aspect={6 / 9}
           onCropChange={setCrop}
           onCropComplete={handleCropComplete}
           showGrid={false}
           
-          /* KUNCI UTAMA AMAN DARI PUTIH-PUTIH */
-          objectFit="cover"       // Memaksa gambar otomatis penuh menutup kotak sejak awal upload
-          restrictPosition={true} // Mengunci agar geseran tidak bisa bablas keluar dari tepi gambar
+          /* ⚡ SOLUSI MUTLAK AGAR GAMBAR TIDAK BLIND/HILANG PAS DIGESER ⚡ */
+          objectFit="cover"            // Memaksa gambar di-render full-size melampaui frame sejak awal
+          restrictPosition={true}      // Tetap menahan tepi agar tidak bocor keluar gambar
+          minZoom={1}                  // Memastikan gambar tidak bisa mengecil dari batas aman cover
           
           style={{
-            shadingStyle: { display: 'none' }, // Menghilangkan bayangan abu-abu gelap bawaan
-          }}
-          classes={{
-            containerClassName: 'custom-cropper-container',
-            cropAreaClassName: 'custom-crop-area'
+            // Memaksa media (gambar asli) untuk merender mode cover agar bagian tersembunyi tetap dimuat
+            mediaStyle: { objectFit: 'cover', minWidth: '100%', minHeight: '100%' },
+            containerStyle: { width: '100%', height: '100%', position: 'absolute' },
+            cropAreaStyle: { width: '100%', height: '100%', border: 'none', boxShadow: 'none' },
+            shadingStyle: { display: 'none' }
           }}
         />
         
