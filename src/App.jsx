@@ -56,21 +56,30 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
         </button>
       </div>
 
-      {/* Bagian Slider Zoom - Ditambahkan stopPropagation agar tidak menggeser kartu */}
-      <div 
-        className="inline-zoom-slider"
-        draggable={false}
-        onDragStart={(e) => e.stopPropagation()} 
-      >
-        <input
-          type="range"
-          min={1}
-          max={3}
-          step={0.01}
-          value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))}
-        />
-      </div>
+     {/* Bagian Slider Zoom di dalam LiveCropItem */}
+<div 
+  className="inline-zoom-slider"
+  draggable={false}
+  onDragStart={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }}
+  onMouseDown={(e) => {
+    e.stopPropagation(); // Menahan agar klik kiri mouse tidak memicu drag-start pada kartu
+  }}
+  onTouchStart={(e) => {
+    e.stopPropagation(); // Mengamankan perangkat layar sentuh / trackpad
+  }}
+>
+  <input
+    type="range"
+    min={1}
+    max={3}
+    step={0.01}
+    value={zoom}
+    onChange={(e) => setZoom(Number(e.target.value))}
+  />
+</div>
     </div>
   );
 }
