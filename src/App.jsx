@@ -24,7 +24,50 @@ function loadImage(src) {
   });
 }
 
-function PhotoGrid({ photos, setPhotos, onEdit }) {
+import Cropper from 'react-easy-crop'; // Tambahkan import ini di paling atas file App.jsx jika belum ada
+
+function PhotoItem({ photo, onRemove, onCropUpdate }) {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+
+  const onCropComplete = useCallback((_area, areaPixels) => {
+    onCropUpdate(photo.id, areaPixels);
+  }, [photo.id, onCropUpdate]);
+
+  return (
+    <div className="card-thumb live-crop">
+      {/* Area Inti Cropper */}
+      <div className="cropper-inline-container">
+        <Cropper
+          image={photo.src}
+          crop={crop}
+          zoom={zoom}
+          aspect={CARD_ASPECT}
+          onCropChange={setCrop}
+          onZoomChange={setZoom}
+          onCropComplete={onCropComplete}
+          showGrid={false} /* Sembunyikan garis bantu agar bersih ala iPhone */
+        />
+        {/* Tombol Hapus Cepat di Pojok Kanan Atas */}
+        <button className="inline-delete-btn" onClick={() => onRemove(photo.id)}>×</button>
+      </div>
+
+      {/* Slider Zoom Kecil di Bawah Foto */}
+      <div className="inline-zoom-control">
+        <input
+          type="range"
+          min={1}
+          max={3}
+          step={0.01}
+          value={zoom}
+          onChange={(e) => setZoom(Number(e.target.value))}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PhotoGrid({ photos, setPhotos }) {
   const dragIndex = useRef(null);
 
   const removePhoto = (id) => {
@@ -47,6 +90,20 @@ function PhotoGrid({ photos, setPhotos, onEdit }) {
     dragIndex.current = null;
   };
 
+  // Logika update koordinat potong gambar secara live
+  const handleCropUpdate = useCallback(async (id, areaPixels) => {
+    // Karena kita butuh hasil potong akhir untuk PDF, kita update croppedSrc secara berkala
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          // Kita bisa simpan koordinat pixel-nya terlebih dahulu
+          return { ...p, areaPixels };
+        }
+        return p;
+      })
+    );
+  }, [setPhotos]);
+
   const totalPages = Math.max(1, Math.ceil(photos.length / PER_PAGE));
 
   return (
@@ -68,17 +125,17 @@ function PhotoGrid({ photos, setPhotos, onEdit }) {
                 return (
                   <div
                     key={photo.id}
-                    className="card-thumb"
+                    style={{ position: 'relative' }}
                     draggable
                     onDragStart={() => handleDragStart(globalIndex)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(globalIndex)}
                   >
-                    <img src={photo.croppedSrc} alt="" />
-                    <div className="card-actions">
-                      <button onClick={() => onEdit(photo)}>Adjust</button>
-                      <button onClick={() => removePhoto(photo.id)}>Hapus</button>
-                    </div>
+                    <PhotoItem 
+                      photo={photo} 
+                      onRemove={removePhoto} 
+                      onCropUpdate={handleCropUpdate} 
+                    />
                   </div>
                 );
               })}
