@@ -462,7 +462,7 @@ h3::before {
   cursor: pointer;
 }
 
- /* --- LIVE GRID CROP STYLING FIXED --- */
+ /* --- LIVE GRID CROP STYLING CLEAN (FIXED RASIO & BORDER) --- */
 
 .grid-item-wrapper {
   width: 100%;
@@ -473,75 +473,51 @@ h3::before {
   flex-direction: column;
   background: #ffffff;
   padding: 4px;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  border-radius: 6px; /* Tidak terlalu bulat, pas presisi cetak */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #cbd5e1; /* Border luar tipis rapi */
   box-sizing: border-box;
 }
 
-/* Mengunci ukuran pembungkus agar 100% konsisten berasio photocard */
+/* Mengunci ukuran rasio photocard pas 6:9 (2 / 3) */
 .cropper-inline-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 5 / 7; 
-  border-radius: 10px;
+  aspect-ratio: 2 / 3; 
+  border-radius: 4px; /* Sudut tajam proporsional */
   overflow: hidden;
   background: #f8fafc;
 }
 
-/* Menghilangkan paksa background abu-abu bawaan library */
+/* Kontainer Cropper */
 .custom-cropper-container {
   background-color: #f1f5f9 !important;
 }
 
-/* Menghilangkan overlay bayangan abu-abu gelap agar fit pas visual kotak */
+/* Garis potong pas mengikuti kotak tanpa overlay abu */
 .custom-crop-area {
-  box-shadow: none !important; /* Menghapus topeng abu-abu di luar kotak */
-  border: 2px solid #4f46e5 !important; /* Memberikan border tipis ungu yang rapi */
-  border-radius: 8px;
-}
-
-/* ZOOM TOMBOL */
-.inline-btn-zoom-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 2px 2px 2px;
-}
-.inline-btn-zoom-controls button {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+  width: 100% !important;
+  height: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  box-shadow: none !important; /* Hapus abu-abu total */
+  border: 1px solid #4f46e5 !important; /* Border ungu super tipis sebagai penanda area cetak */
   border-radius: 4px;
-  width: 24px;
-  height: 24px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.inline-btn-zoom-controls button:hover {
-  background: #e2e8f0;
-}
-.zoom-val {
-  font-size: 11px;
-  color: #64748b;
-  font-weight: 500;
 }
 
-/* Tombol Hapus */
+/* Tombol Hapus Silang Minimalis */
 .inline-delete-btn {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.75);
   color: white;
   border: none;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -549,6 +525,7 @@ h3::before {
   cursor: pointer;
   z-index: 10;
 }
+
 .inline-delete-btn:hover {
   background: #ef4444;
 }
