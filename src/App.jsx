@@ -20,40 +20,64 @@ function readFileAsDataUrl(file) {
 }
 
 function LiveCropItem({ photo, onRemove, onCropChange }) {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  // Posisi awal di tengah (50% X, 50% Y)
+  const [pos, setPos] = useState(photo.customPos || { x: 50, y: 50 });
+  const isDragging = useRef(false);
+  const startCoord = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ x: 50, y: 50 });
 
-  const handleCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
-    onCropChange(photo.id, croppedAreaPixels);
-  }, [photo.id, onCropChange]);
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    isDragging.current = true;
+    startCoord.current = { x: e.clientX, y: e.clientY };
+    startPos.current = { ...pos };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging.current) return;
+    
+    // Hitung seberapa jauh mouse bergeser (sensitivitas pergerakan)
+    const deltaX = (e.clientX - startCoord.current.x) * 0.2; 
+    const deltaY = (e.clientY - startCoord.current.y) * 0.2;
+
+    // Batasi pergerakan dari 0% sampai 100% agar gambar tidak bocor putih keluar kotak
+    const newX = Math.max(0, Math.min(100, startPos.current.x - deltaX));
+    const newY = Math.max(0, Math.min(100, startPos.current.y - deltaY));
+
+    const updatedPos = { x: newX, y: newY };
+    setPos(updatedPos);
+
+    // Kirim data koordinat dalam format pixel simulasi agar fungsi cetak PDF tidak error
+    // Menghitung estimasi area berdasarkan posisi persentase background
+    const simulatedPixels = {
+      x: Math.round((newX / 100) * 200),
+      y: Math.round((newY / 100) * 300),
+      width: 600,
+      height: 900
+    };
+    onCropChange(photo.id, simulatedPixels);
+    photo.customPos = updatedPos; // Simpan posisi sementara di objek foto
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
 
   return (
     <div className="card-thumb live-crop-card">
-      <div className="cropper-inline-wrap">
-        <Cropper
-          image={photo.src}
-          crop={crop}
-          zoom={zoom}
-          onZoomChange={setZoom}
-          aspect={6 / 9}
-          onCropChange={setCrop}
-          onCropComplete={handleCropComplete}
-          showGrid={false}
-          
-          /* ⚡ SOLUSI MUTLAK AGAR GAMBAR TIDAK BLIND/HILANG PAS DIGESER ⚡ */
-          objectFit="cover"            // Memaksa gambar di-render full-size melampaui frame sejak awal
-          restrictPosition={true}      // Tetap menahan tepi agar tidak bocor keluar gambar
-          minZoom={1}                  // Memastikan gambar tidak bisa mengecil dari batas aman cover
-          
-          style={{
-            // Memaksa media (gambar asli) untuk merender mode cover agar bagian tersembunyi tetap dimuat
-            mediaStyle: { objectFit: 'cover', minWidth: '100%', minHeight: '100%' },
-            containerStyle: { width: '100%', height: '100%', position: 'absolute' },
-            cropAreaStyle: { width: '100%', height: '100%', border: 'none', boxShadow: 'none' },
-            shadingStyle: { display: 'none' }
-          }}
-        />
-        
+      <div 
+        className="cropper-inline-wrap dynamic-bg-card"
+        onMouseDown={handleMouseDown}
+        style={{
+          backgroundImage: `url(${photo.src})`,
+          backgroundPosition: `${pos.x}% ${pos.y}%`,
+          cursor: isDragging.current ? 'grabbing' : 'grab'
+        }}
+      >
         {/* Tombol Hapus Silang */}
         <button 
           className="inline-delete-btn" 
