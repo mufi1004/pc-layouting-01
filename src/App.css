@@ -16,10 +16,13 @@
 body {
   background-color: var(--bg-main);
   color: var(--text-main);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Kombinasi font untuk menghasilkan look & feel clean khas iPhone */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Inter", sans-serif;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em; /* Ciri khas typography Apple yang rapat dan rapi */
 }
 
 .app {
@@ -35,11 +38,11 @@ header {
 }
 
 header h1 {
-  font-size: 2.2rem;
-  font-weight: 800;
+  font-size: 2.4rem;
+  font-weight: 700; /* Ketebalan khas Apple Display */
   color: var(--text-main);
   margin-bottom: 8px;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em; /* Sedikit lebih rapat untuk ukuran font besar */
 }
 
 header p {
