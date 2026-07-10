@@ -22,9 +22,10 @@ export default function CropModal({ photo, onCancel, onSave }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
+    <div className="crop-modal-overlay">
+      <div className="crop-modal-content">
         <h3>Atur Crop</h3>
+        
         <div className="cropper-container">
           <Cropper
             image={photo.src}
@@ -36,7 +37,8 @@ export default function CropModal({ photo, onCancel, onSave }) {
             onCropComplete={onCropComplete}
           />
         </div>
-        <div className="zoom-control">
+        
+        <div className="crop-controls">
           <label>Zoom</label>
           <input
             type="range"
@@ -47,9 +49,12 @@ export default function CropModal({ photo, onCancel, onSave }) {
             onChange={(e) => setZoom(Number(e.target.value))}
           />
         </div>
-        <div className="modal-actions">
-          <button onClick={onCancel} disabled={saving}>Batal</button>
-          <button onClick={handleSave} disabled={saving} className="primary">
+        
+        <div className="crop-actions">
+          <button className="cancel-btn" onClick={onCancel} disabled={saving}>
+            Batal
+          </button>
+          <button className="save-btn" onClick={handleSave} disabled={saving}>
             {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
