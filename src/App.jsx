@@ -19,18 +19,68 @@ function readFileAsDataUrl(file) {
   });
 }
 
+// Pastikan import di paling atas file App.jsx seperti ini:
+// import { useState, useRef, useEffect, useCallback } from 'react';
+
 function LiveCropItem({ photo, onRemove, onCropChange }) {
-  // Posisi awal di tengah (50% X, 50% Y)
-  const [pos, setPos] = useState(photo.customPos || { x: 50, y: 50 });
+  const posRef = useRef(photo.customPos || { x: 50, y: 50 });
   const isDragging = useRef(false);
   const startCoord = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 50, y: 50 });
+  const cardRef = useRef(null);
+
+  // --- KUNCI UTAMA: Hitung koordinat pixel potong sesuai resolusi ASLI gambar ---
+  const calculateRealCrop = useCallback((percentX, percentY) => {
+    const img = new Image();
+    img.src = photo.src;
+    
+    img.onload = () => {
+      const nw = img.naturalWidth;
+      const nh = img.naturalHeight;
+      const targetAspect = 2 / 3; // Rasio pas photocard 6:9
+      const imgAspect = nw / nh;
+
+      let cropW, cropH;
+
+      if (imgAspect > targetAspect) {
+        // Gambar asli melebar (Landscape), mentok ke tinggi
+        cropH = nh;
+        cropW = nh * targetAspect;
+      } else {
+        // Gambar asli memanjang (Portrait), mentok ke lebar
+        cropW = nw;
+        cropH = nw / targetAspect;
+      }
+
+      // Konversi posisi persentase (0-100) menjadi posisi koordinat X dan Y sungguhan
+      const cropX = ((nw - cropW) * percentX) / 100;
+      const cropY = ((nh - cropH) * percentY) / 100;
+
+      const realCropPixels = {
+        x: Math.round(cropX),
+        y: Math.round(cropY),
+        width: Math.round(cropW),
+        height: Math.round(cropH)
+      };
+
+      // Kirim koordinat asli ke sistem pembuat PDF
+      onCropChange(photo.id, realCropPixels);
+    };
+  }, [photo.id, photo.src, onCropChange]);
+
+  // Kalkulasi wajib berjalan di awal meski gambar tidak digeser sama sekali
+  useEffect(() => {
+    calculateRealCrop(posRef.current.x, posRef.current.y);
+  }, [calculateRealCrop]);
 
   const handleMouseDown = (e) => {
     e.preventDefault();
     isDragging.current = true;
     startCoord.current = { x: e.clientX, y: e.clientY };
-    startPos.current = { ...pos };
+    startPos.current = { ...posRef.current };
+    
+    if (cardRef.current) cardRef.current.style.cursor = 'grabbing';
+    
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -38,47 +88,45 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
   const handleMouseMove = (e) => {
     if (!isDragging.current) return;
     
-    // Hitung seberapa jauh mouse bergeser (sensitivitas pergerakan)
-    const deltaX = (e.clientX - startCoord.current.x) * 0.2; 
-    const deltaY = (e.clientY - startCoord.current.y) * 0.2;
+    const deltaX = (e.clientX - startCoord.current.x) * 0.3; 
+    const deltaY = (e.clientY - startCoord.current.y) * 0.3;
 
-    // Batasi pergerakan dari 0% sampai 100% agar gambar tidak bocor putih keluar kotak
     const newX = Math.max(0, Math.min(100, startPos.current.x - deltaX));
     const newY = Math.max(0, Math.min(100, startPos.current.y - deltaY));
 
-    const updatedPos = { x: newX, y: newY };
-    setPos(updatedPos);
+    posRef.current = { x: newX, y: newY };
 
-    // Kirim data koordinat dalam format pixel simulasi agar fungsi cetak PDF tidak error
-    // Menghitung estimasi area berdasarkan posisi persentase background
-    const simulatedPixels = {
-      x: Math.round((newX / 100) * 200),
-      y: Math.round((newY / 100) * 300),
-      width: 600,
-      height: 900
-    };
-    onCropChange(photo.id, simulatedPixels);
-    photo.customPos = updatedPos; // Simpan posisi sementara di objek foto
+    if (cardRef.current) {
+      cardRef.current.style.backgroundPosition = `${newX}% ${newY}%`;
+    }
   };
 
   const handleMouseUp = () => {
+    if (!isDragging.current) return;
     isDragging.current = false;
+    
+    if (cardRef.current) cardRef.current.style.cursor = 'grab';
+
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
+
+    // Update dan kirim ulang data koordinat ke PDF setiap kali admin selesai menggeser gambar
+    calculateRealCrop(posRef.current.x, posRef.current.y);
+    photo.customPos = posRef.current; 
   };
 
   return (
     <div className="card-thumb live-crop-card">
       <div 
+        ref={cardRef}
         className="cropper-inline-wrap dynamic-bg-card"
         onMouseDown={handleMouseDown}
         style={{
           backgroundImage: `url(${photo.src})`,
-          backgroundPosition: `${pos.x}% ${pos.y}%`,
-          cursor: isDragging.current ? 'grabbing' : 'grab'
+          backgroundPosition: `${posRef.current.x}% ${posRef.current.y}%`,
+          cursor: 'grab'
         }}
       >
-        {/* Tombol Hapus Silang */}
         <button 
           className="inline-delete-btn" 
           onClick={(e) => {
