@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import './App.css';
 import CropModal from './CropModal';
 import { getCroppedImage, getDefaultCropPixels } from './cropImage';
@@ -24,50 +24,7 @@ function loadImage(src) {
   });
 }
 
-import Cropper from 'react-easy-crop'; // Tambahkan import ini di paling atas file App.jsx jika belum ada
-
-function PhotoItem({ photo, onRemove, onCropUpdate }) {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-
-  const onCropComplete = useCallback((_area, areaPixels) => {
-    onCropUpdate(photo.id, areaPixels);
-  }, [photo.id, onCropUpdate]);
-
-  return (
-    <div className="card-thumb live-crop">
-      {/* Area Inti Cropper */}
-      <div className="cropper-inline-container">
-        <Cropper
-          image={photo.src}
-          crop={crop}
-          zoom={zoom}
-          aspect={CARD_ASPECT}
-          onCropChange={setCrop}
-          onZoomChange={setZoom}
-          onCropComplete={onCropComplete}
-          showGrid={false} /* Sembunyikan garis bantu agar bersih ala iPhone */
-        />
-        {/* Tombol Hapus Cepat di Pojok Kanan Atas */}
-        <button className="inline-delete-btn" onClick={() => onRemove(photo.id)}>×</button>
-      </div>
-
-      {/* Slider Zoom Kecil di Bawah Foto */}
-      <div className="inline-zoom-control">
-        <input
-          type="range"
-          min={1}
-          max={3}
-          step={0.01}
-          value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))}
-        />
-      </div>
-    </div>
-  );
-}
-
-function PhotoGrid({ photos, setPhotos }) {
+function PhotoGrid({ photos, setPhotos, onEdit }) {
   const dragIndex = useRef(null);
 
   const removePhoto = (id) => {
@@ -90,20 +47,6 @@ function PhotoGrid({ photos, setPhotos }) {
     dragIndex.current = null;
   };
 
-  // Logika update koordinat potong gambar secara live
-  const handleCropUpdate = useCallback(async (id, areaPixels) => {
-    // Karena kita butuh hasil potong akhir untuk PDF, kita update croppedSrc secara berkala
-    setPhotos((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          // Kita bisa simpan koordinat pixel-nya terlebih dahulu
-          return { ...p, areaPixels };
-        }
-        return p;
-      })
-    );
-  }, [setPhotos]);
-
   const totalPages = Math.max(1, Math.ceil(photos.length / PER_PAGE));
 
   return (
@@ -125,17 +68,26 @@ function PhotoGrid({ photos, setPhotos }) {
                 return (
                   <div
                     key={photo.id}
-                    style={{ position: 'relative' }}
+                    className="card-thumb"
                     draggable
                     onDragStart={() => handleDragStart(globalIndex)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(globalIndex)}
+                    onClick={() => onEdit(photo)} /* Klik area foto langsung memicu fungsi crop */
+                    style={{ cursor: 'pointer' }}
                   >
-                    <PhotoItem 
-                      photo={photo} 
-                      onRemove={removePhoto} 
-                      onCropUpdate={handleCropUpdate} 
-                    />
+                    <img src={photo.croppedSrc} alt="" />
+                    
+                    {/* Mengganti hover menu dengan tombol hapus kecil instan di pojok kanan atas */}
+                    <button 
+                      className="inline-delete-btn" 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Mencegah modal crop terbuka saat klik tombol hapus
+                        removePhoto(photo.id);
+                      }}
+                    >
+                      ×
+                    </button>
                   </div>
                 );
               })}
@@ -158,7 +110,6 @@ export default function App() {
   const [editingPhoto, setEditingPhoto] = useState(null);
   const [editingSide, setEditingSide] = useState('front');
   const [generating, setGenerating] = useState(false);
-
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
 
@@ -240,6 +191,7 @@ export default function App() {
             />
           </div>
         </div>
+
         <div className="form-row">
           <label>Inisial Admin</label>
           <input
@@ -249,6 +201,7 @@ export default function App() {
             placeholder="AB"
           />
         </div>
+
         <div className="form-row">
           <label>Sisi</label>
           <select value={sides} onChange={(e) => setSides(e.target.value)}>
