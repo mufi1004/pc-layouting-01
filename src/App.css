@@ -473,9 +473,9 @@ h3::before {
   flex-direction: column;
   background: #ffffff;
   padding: 4px;
-  border-radius: 6px; /* Tipis profesional, tidak terlalu bulat */
+  border-radius: 6px; /* Kotak rapi profesional, tidak terlalu bulat */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #cbd5e1; /* Border luar kartu tipis rapi */
+  border: 1px solid #cbd5e1; /* Border luar kartu tipis */
   box-sizing: border-box;
 }
 
@@ -486,19 +486,15 @@ h3::before {
   aspect-ratio: 2 / 3; 
   border-radius: 4px; 
   overflow: hidden;
-  background: #f8fafc;
-  border: 1px solid #4f46e5; /* Garis penanda potong ungu super tipis dipindah ke pembungkus luar */
+  background: #f1f5f9;
+  border: 1px solid #4f46e5; /* Garis ungu tipis batas potong */
 }
 
-/* Kontainer Utama Cropper */
-.custom-cropper-container {
-  background-color: #f1f5f9 !important;
-}
-
-/* KUNCI PERBAIKAN: Biarkan area potong transparan tanpa dipaksa width/height 100% agar deteksi pembatas gambar berfungsi normal */
-.custom-crop-area {
-  box-shadow: none !important;
-  border: none !important;
+/* Memaksa gambar background selalu memenuhi kotak penuh (cover) */
+.dynamic-bg-card {
+  background-size: cover;
+  background-repeat: no-repeat;
+  user-select: none;
 }
 
 /* Tombol Hapus Silang Minimalis */
