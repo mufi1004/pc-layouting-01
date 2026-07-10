@@ -249,7 +249,7 @@ h3::before {
   display: grid;
   gap: 12px;
   background: #f1f5f9;
-  padding: 16px;
+  padding: 8px;
   border-radius: var(--radius-md);
   justify-content: center;
 }
