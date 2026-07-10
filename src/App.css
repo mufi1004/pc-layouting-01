@@ -326,3 +326,108 @@ h3::before {
 .card-actions button:last-child:hover {
   background: #dc2626;
 }
+
+/* --- CROP MODAL STYLING (iOS Aesthetic) --- */
+
+/* Backdrop / Latar Belakang Gelap */
+.crop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4); /* Efek gelap transparan */
+  backdrop-filter: blur(8px); /* Efek blur kaca khas iOS */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Memastikan modal berada di paling atas layar */
+  padding: 20px;
+}
+
+/* Kotak Modal Utama */
+.crop-modal-content {
+  background: #ffffff;
+  width: 100%;
+  max-width: 500px; /* Batasi lebar maksimal agar pas di HP/Laptop */
+  border-radius: 20px; /* Sudut melengkung halus khas Apple */
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Judul Modal */
+.crop-modal-content h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+  padding: 0;
+}
+.crop-modal-content h3::before {
+  display: none; /* Hapus garis vertikal bawaan khusus di dalam modal */
+}
+
+/* Area Kontainer Cropper (Sangat Penting!) */
+.cropper-container {
+  position: relative;
+  width: 100%;
+  height: 350px; /* Tentukan tinggi area crop */
+  background: #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden; /* Potong gambar yang keluar jalur */
+}
+
+/* Kontrol Slider & Zoom */
+.crop-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crop-controls label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.crop-controls input[type="range"] {
+  width: 100%;
+  accent-color: #4f46e5; /* Warna slider utama */
+}
+
+/* Area Tombol Aksi */
+.crop-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.crop-actions button {
+  flex: 1;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Tombol Batal */
+.crop-actions button.cancel-btn {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.crop-actions button.cancel-btn:hover {
+  background: #e2e8f0;
+}
+
+/* Tombol Simpan */
+.crop-actions button.save-btn {
+  background: #4f46e5;
+  color: white;
+}
+.crop-actions button.save-btn:hover {
+  background: #4338ca;
+}
