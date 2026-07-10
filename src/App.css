@@ -508,21 +508,33 @@ h3::before {
   border-radius: 8px;
 }
 
-/* Slider Zoom */
-.inline-zoom-slider {
-  padding: 10px 4px 2px 4px;
+/* ZOOM TOMBOL */
+.inline-btn-zoom-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 2px 2px 2px;
+}
+.inline-btn-zoom-controls button {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  cursor: default;
+  justify-content: center;
 }
-
-.inline-zoom-slider input[type="range"] {
-  width: 100%;
-  height: 5px;
-  accent-color: #4f46e5;
-  background: #cbd5e1;
-  border-radius: 4px;
-  cursor: pointer;
+.inline-btn-zoom-controls button:hover {
+  background: #e2e8f0;
+}
+.zoom-val {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
 }
 
 /* Tombol Hapus */
