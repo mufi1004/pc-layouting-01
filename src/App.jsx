@@ -56,30 +56,60 @@ function LiveCropItem({ photo, onRemove, onCropChange }) {
         </button>
       </div>
 
-     {/* Bagian Slider Zoom di dalam LiveCropItem */}
-<div 
-  className="inline-zoom-slider"
-  draggable={false}
-  onDragStart={(e) => {
-    e.preventDefault();
+      function LiveCropItem({ photo, onRemove, onCropChange }) {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+
+  const handleCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
+    onCropChange(photo.id, croppedAreaPixels);
+  }, [photo.id, onCropChange]);
+
+  // Fungsi memperbesar / memperkecil manual via tombol
+  const zoomIn = (e) => {
     e.stopPropagation();
-  }}
-  onMouseDown={(e) => {
-    e.stopPropagation(); // Menahan agar klik kiri mouse tidak memicu drag-start pada kartu
-  }}
-  onTouchStart={(e) => {
-    e.stopPropagation(); // Mengamankan perangkat layar sentuh / trackpad
-  }}
->
-  <input
-    type="range"
-    min={1}
-    max={3}
-    step={0.01}
-    value={zoom}
-    onChange={(e) => setZoom(Number(e.target.value))}
-  />
-</div>
+    setZoom((prev) => Math.min(prev + 0.25, 3));
+  };
+
+  const zoomOut = (e) => {
+    e.stopPropagation();
+    setZoom((prev) => Math.max(prev - 0.25, 1));
+  };
+
+  return (
+    <div className="card-thumb live-crop-card">
+      <div className="cropper-inline-wrap">
+        <Cropper
+          image={photo.src}
+          crop={crop}
+          zoom={zoom}
+          aspect={CARD_ASPECT}
+          onCropChange={setCrop}
+          onZoomChange={setZoom}
+          onCropComplete={handleCropComplete}
+          showGrid={false}
+          classes={{
+            containerClassName: 'custom-cropper-container',
+            cropAreaClassName: 'custom-crop-area'
+          }}
+        />
+        
+        <button 
+          className="inline-delete-btn" 
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(photo.id);
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Kontrol Tombol Mini */}
+      <div className="inline-btn-zoom-controls" onDragStart={(e) => e.stopPropagation()}>
+        <button type="button" onClick={zoomOut}>-</button>
+        <span className="zoom-val">{Math.round(zoom * 100)}%</span>
+        <button type="button" onClick={zoomIn}>+</button>
+      </div>
     </div>
   );
 }
