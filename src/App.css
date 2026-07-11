@@ -282,12 +282,6 @@ h3::before {
   cursor: grabbing;
 }
 
-.inline-zoom-slider {
-  width: 100%;
-  margin-top: 6px;
-  accent-color: var(--primary);
-}
-
 .inline-delete-btn {
   position: absolute;
   top: 4px;
@@ -506,4 +500,35 @@ h3::before {
 }
 .inline-delete-btn:hover {
   background: #ef4444;
+}
+
+.zoom-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.zoom-buttons button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.zoom-buttons button:hover {
+  background: #f1f5f9;
+}
+
+.zoom-value {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: center;
 }
