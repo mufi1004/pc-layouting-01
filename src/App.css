@@ -532,3 +532,26 @@ h3::before {
   min-width: 36px;
   text-align: center;
 }
+
+.inline-duplicate-btn {
+  position: absolute;
+  top: 4px;
+  right: 28px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  color: white;
+  border: none;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.inline-duplicate-btn:hover {
+  background: #4f46e5;
+}
