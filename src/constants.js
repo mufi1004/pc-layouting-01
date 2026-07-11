@@ -9,21 +9,22 @@ export const COLS = 5;
 export const ROWS = 5;
 export const PER_PAGE = COLS * ROWS; // 25
 
-// center-to-center spacing between marks
-export const SPACING_X = 5.7;
-export const SPACING_Y = 8.7;
-
-// margins so the grid of marks is centered on the page
-export const GRID_W = SPACING_X * COLS;
-export const GRID_H = SPACING_Y * ROWS;
+// cards are placed edge-to-edge (no gap, no overlap) -- pitch equals card size
+export const GRID_W = CARD_W * COLS;
+export const GRID_H = CARD_H * ROWS;
 export const MARGIN_X = (PAGE_W - GRID_W) / 2;
 export const MARGIN_Y = (PAGE_H - GRID_H) / 2;
 
 // crop aspect ratio (w / h)
 export const CARD_ASPECT = CARD_W / CARD_H;
 
-// cut mark size (small "+" cross), in cm
-export const MARK_SIZE = 0.3;
+// each of the 4 corner marks is inset this far from the card's own edge
+// (gives 5.7 x 8.7 cm mark-to-mark span within a card, and 0.3cm / 3mm
+// between a card's mark and its neighbor's mark)
+export const MARK_INSET = 0.15;
+
+// thin cross size for each cut mark, in cm
+export const MARK_SIZE = 0.2;
 
 // thin outline around each card, in cm
 export const OUTLINE_WIDTH = 0.02;
