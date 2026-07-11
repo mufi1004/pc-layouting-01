@@ -33,7 +33,12 @@ function LiveCropCard({ photo, onRemove, onAdjustChange }) {
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const panStart = useRef({ x: 50, y: 50 });
+  const rectCache = useRef(null);
   const naturalSize = useRef({ w: photo.naturalWidth, h: photo.naturalHeight });
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  zoomRef.current = zoom;
+  panRef.current = pan;
 
   const emitChange = useCallback((nextZoom, nextPan) => {
     const box = boxRef.current;
@@ -59,16 +64,18 @@ function LiveCropCard({ photo, onRemove, onAdjustChange }) {
 
   const handlePointerDown = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     dragging.current = true;
     dragStart.current = { x: e.clientX, y: e.clientY };
-    panStart.current = { ...pan };
+    panStart.current = { ...panRef.current };
+    rectCache.current = boxRef.current.getBoundingClientRect();
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
   };
 
   const handlePointerMove = (e) => {
-    if (!dragging.current || !boxRef.current) return;
-    const rect = boxRef.current.getBoundingClientRect();
+    if (!dragging.current || !rectCache.current) return;
+    const rect = rectCache.current;
     const deltaXPercent = ((e.clientX - dragStart.current.x) / rect.width) * 100;
     const deltaYPercent = ((e.clientY - dragStart.current.y) / rect.height) * 100;
     const nextPan = {
@@ -80,25 +87,29 @@ function LiveCropCard({ photo, onRemove, onAdjustChange }) {
 
   const handlePointerUp = () => {
     dragging.current = false;
+    rectCache.current = null;
     window.removeEventListener('pointermove', handlePointerMove);
     window.removeEventListener('pointerup', handlePointerUp);
-    setPan((current) => {
-      emitChange(zoom, current);
-      return current;
-    });
+    emitChange(zoomRef.current, panRef.current);
   };
 
   const handleWheel = (e) => {
     e.preventDefault();
-    const nextZoom = Math.max(1, Math.min(4, zoom - e.deltaY * 0.001));
+    const nextZoom = Math.max(1, Math.min(4, zoomRef.current - e.deltaY * 0.001));
     setZoom(nextZoom);
-    emitChange(nextZoom, pan);
+    // wheel ticks are infrequent enough to emit directly
+    emitChange(nextZoom, panRef.current);
   };
 
-  const handleZoomSlider = (e) => {
-    const nextZoom = Number(e.target.value);
-    setZoom(nextZoom);
-    emitChange(nextZoom, pan);
+  // Slider updates zoom locally on every tick (cheap, local state only).
+  // The expensive parent-level update (which re-renders the whole grid)
+  // is only committed once the user releases the slider.
+  const handleZoomSliderChange = (e) => {
+    setZoom(Number(e.target.value));
+  };
+
+  const commitZoom = () => {
+    emitChange(zoomRef.current, panRef.current);
   };
 
   const bgSize = boxRef.current
@@ -136,8 +147,12 @@ function LiveCropCard({ photo, onRemove, onAdjustChange }) {
         max={4}
         step={0.01}
         value={zoom}
-        onChange={handleZoomSlider}
-        onClick={(e) => e.stopPropagation()}
+        draggable={false}
+        onPointerDown={(e) => e.stopPropagation()}
+        onChange={handleZoomSliderChange}
+        onMouseUp={commitZoom}
+        onTouchEnd={commitZoom}
+        onKeyUp={commitZoom}
       />
     </div>
   );
@@ -189,7 +204,13 @@ function PhotoGrid({ photos, setPhotos, onAdjustChange }) {
                     key={photo.id}
                     className="grid-item-wrapper"
                     draggable
-                    onDragStart={() => handleDragStart(globalIndex)}
+                    onDragStart={(e) => {
+                      if (e.target.tagName === 'INPUT' || e.target.closest('.live-crop-box')) {
+                        e.preventDefault();
+                        return;
+                      }
+                      handleDragStart(globalIndex);
+                    }}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(globalIndex)}
                   >

@@ -1,5 +1,5 @@
 // All measurements in cm
-export const PAGE_W = 32.9;
+export const PAGE_W = 33;
 export const PAGE_H = 48.3;
 
 export const CARD_W = 6;
