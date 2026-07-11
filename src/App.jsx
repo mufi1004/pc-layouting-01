@@ -137,20 +137,23 @@ const ZOOM_STEP = 0.1;
           ×
         </button>
       </div>
-      <input
-        type="range"
-        className="inline-zoom-slider"
-        min={1}
-        max={4}
-        step={0.01}
-        value={zoom}
-        draggable={false}
-        onPointerDown={(e) => e.stopPropagation()}
-        onChange={handleZoomSliderChange}
-        onMouseUp={commitZoom}
-        onTouchEnd={commitZoom}
-        onKeyUp={commitZoom}
-      />
+      <div className="zoom-buttons">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); adjustZoom(-ZOOM_STEP); }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          −
+        </button>
+        <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); adjustZoom(ZOOM_STEP); }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }
