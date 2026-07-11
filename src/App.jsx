@@ -26,7 +26,7 @@ function loadImage(src) {
 // A single photocard thumbnail with live pan (drag) + zoom (wheel/slider) adjust.
 // The preview box has the exact 6:9 card aspect ratio, so what's shown here
 // is exactly what ends up in the PDF.
-function LiveCropCard({ photo, onRemove, onAdjustChange }) {
+function LiveCropCard({ photo, onRemove, onDuplicate, onAdjustChange }) {
   const [zoom, setZoom] = useState(photo.zoom ?? 1);
   const [pan, setPan] = useState(photo.pan ?? { x: 50, y: 50 });
   const boxRef = useRef(null);
@@ -136,6 +136,14 @@ const ZOOM_STEP = 0.1;
         <button className="inline-delete-btn" onClick={(e) => { e.stopPropagation(); onRemove(photo.id); }}>
           ×
         </button>
+        <button
+          className="inline-duplicate-btn"
+          onClick={(e) => { e.stopPropagation(); onDuplicate(photo.id); }}
+          onPointerDown={(e) => e.stopPropagation()}
+          title="Duplikat foto ini"
+        >
+          ⧉
+        </button>
       </div>
       <div className="zoom-buttons">
         <button
@@ -163,6 +171,18 @@ function PhotoGrid({ photos, setPhotos, onAdjustChange }) {
 
   const removePhoto = (id) => {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const duplicatePhoto = (id) => {
+    setPhotos((prev) => {
+      const index = prev.findIndex((p) => p.id === id);
+      if (index === -1) return prev;
+      const original = prev[index];
+      const copy = { ...original, id: nextId++ };
+      const next = [...prev];
+      next.splice(index + 1, 0, copy);
+      return next;
+    });
   };
 
   const handleDragStart = (index) => {
@@ -214,7 +234,7 @@ function PhotoGrid({ photos, setPhotos, onAdjustChange }) {
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(globalIndex)}
                   >
-                    <LiveCropCard photo={photo} onRemove={removePhoto} onAdjustChange={onAdjustChange} />
+                    <LiveCropCard photo={photo} onRemove={removePhoto} onDuplicate={duplicatePhoto} onAdjustChange={onAdjustChange} />
                   </div>
                 );
               })}
