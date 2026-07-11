@@ -29,7 +29,7 @@ const OUTLINE_WIDTH_MM = cm2mm(OUTLINE_WIDTH);
 
 function drawMark(doc, cx, cy) {
   const half = MARK_SIZE_MM / 2;
-  doc.setDrawColor(0, 0, 0);
+  doc.setDrawColor(150, 150, 150);
   doc.setLineWidth(0.1); // 0.1mm hairline
   doc.line(cx - half, cy, cx + half, cy);
   doc.line(cx, cy - half, cx, cy + half);
