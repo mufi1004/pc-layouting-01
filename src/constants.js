@@ -24,7 +24,7 @@ export const CARD_ASPECT = CARD_W / CARD_H;
 export const MARK_INSET = 0.15;
 
 // thin cross size for each cut mark, in cm
-export const MARK_SIZE = 0.2;
+export const MARK_SIZE = 0.4;
 
 // thin outline around each card, in cm
 export const OUTLINE_WIDTH = 0.02;
