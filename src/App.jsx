@@ -101,15 +101,12 @@ function LiveCropCard({ photo, onRemove, onAdjustChange }) {
     emitChange(nextZoom, panRef.current);
   };
 
-  // Slider updates zoom locally on every tick (cheap, local state only).
-  // The expensive parent-level update (which re-renders the whole grid)
-  // is only committed once the user releases the slider.
-  const handleZoomSliderChange = (e) => {
-    setZoom(Number(e.target.value));
-  };
+const ZOOM_STEP = 0.1;
 
-  const commitZoom = () => {
-    emitChange(zoomRef.current, panRef.current);
+  const adjustZoom = (delta) => {
+    const nextZoom = Math.max(1, Math.min(4, zoomRef.current + delta));
+    setZoom(nextZoom);
+    emitChange(nextZoom, panRef.current);
   };
 
   const bgSize = boxRef.current
