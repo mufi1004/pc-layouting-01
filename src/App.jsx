@@ -259,6 +259,8 @@ export default function App() {
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
 
+  const [dragOverSide, setDragOverSide] = useState(null); // 'front' | 'back' | null
+
   const addPhotos = async (fileList, setPhotos) => {
     const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
     for (const file of files) {
@@ -280,6 +282,26 @@ export default function App() {
     }
   };
 
+  // Add a photo directly from a Blob (used for images dragged in from a
+  // webpage, e.g. Pinterest, rather than picked from disk).
+  const addPhotoFromBlob = async (blob, setPhotos) => {
+    const src = await readFileAsDataUrl(blob);
+    const img = await loadImage(src);
+    const id = nextId++;
+    setPhotos((prev) => [
+      ...prev,
+      {
+        id,
+        src,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        areaPixels: null,
+        zoom: 1,
+        pan: { x: 50, y: 50 },
+      },
+    ]);
+  };
+
   const onFrontInputChange = (e) => {
     addPhotos(e.target.files, setFrontPhotos);
     e.target.value = '';
@@ -288,6 +310,47 @@ export default function App() {
   const onBackInputChange = (e) => {
     addPhotos(e.target.files, setBackPhotos);
     e.target.value = '';
+  };
+
+  const handleDragOver = (side) => (e) => {
+    e.preventDefault();
+    setDragOverSide(side);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverSide(null);
+  };
+
+  // Handles both: (1) files dragged from the OS file explorer, and
+  // (2) images dragged directly from a webpage (Pinterest, Google Images,
+  // etc). Case (2) usually arrives as a URL rather than a real file, so we
+  // try to fetch it ourselves — this only works if the source site allows
+  // cross-origin fetches for that image.
+  const handleDrop = (side) => async (e) => {
+    e.preventDefault();
+    setDragOverSide(null);
+    const setPhotos = side === 'front' ? setFrontPhotos : setBackPhotos;
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      addPhotos(e.dataTransfer.files, setPhotos);
+      return;
+    }
+
+    const uri = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+    if (uri && /^https?:\/\//i.test(uri)) {
+      try {
+        const res = await fetch(uri, { mode: 'cors' });
+        if (!res.ok) throw new Error('fetch failed');
+        const blob = await res.blob();
+        if (!blob.type.startsWith('image/')) throw new Error('not an image');
+        await addPhotoFromBlob(blob, setPhotos);
+      } catch (err) {
+        console.error(err);
+        alert(
+          'Gagal ambil gambar langsung dari situs ini (biasanya karena situsnya memblokir akses lintas domain). Coba download gambarnya dulu, lalu upload manual.'
+        );
+      }
+    }
   };
 
   const makeAdjustHandler = (setPhotos) =>
@@ -388,7 +451,13 @@ export default function App() {
         <div className="filename-preview">Nama file: {buildFilename()}</div>
       </div>
 
-      <div className="upload-zone" onClick={() => frontInputRef.current.click()}>
+      <div
+        className={`upload-zone${dragOverSide === 'front' ? ' drag-over' : ''}`}
+        onClick={() => frontInputRef.current.click()}
+        onDragOver={handleDragOver('front')}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop('front')}
+      >
         <input
           ref={frontInputRef}
           type="file"
@@ -397,11 +466,17 @@ export default function App() {
           onChange={onFrontInputChange}
           style={{ display: 'none' }}
         />
-        <p>Klik untuk upload foto sisi depan (bisa pilih banyak sekaligus)</p>
+        <p>Klik, atau drag & drop foto ke sini (bisa langsung dari Pinterest/web)</p>
       </div>
 
       {sides === '2' && (
-        <div className="upload-zone back" onClick={() => backInputRef.current.click()}>
+        <div
+          className={`upload-zone back${dragOverSide === 'back' ? ' drag-over' : ''}`}
+          onClick={() => backInputRef.current.click()}
+          onDragOver={handleDragOver('back')}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop('back')}
+        >
           <input
             ref={backInputRef}
             type="file"
@@ -410,7 +485,7 @@ export default function App() {
             onChange={onBackInputChange}
             style={{ display: 'none' }}
           />
-          <p>Klik untuk upload foto sisi belakang</p>
+          <p>Klik, atau drag & drop foto sisi belakang ke sini</p>
           <p className="hint">Urutan otomatis di-mirror saat di-PDF supaya sejajar dengan sisi depan.</p>
         </div>
       )}
