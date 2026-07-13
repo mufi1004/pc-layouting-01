@@ -153,6 +153,17 @@ header p {
   background: #fff5f5;
 }
 
+.upload-zone.drag-over {
+  border-color: var(--primary);
+  background: #eef2ff;
+  transform: scale(1.01);
+}
+
+.upload-zone.back.drag-over {
+  border-color: #f43f5e;
+  background: #fff1f2;
+}
+
 .upload-zone p {
   margin: 8px 0;
   font-weight: 500;
@@ -280,6 +291,60 @@ h3::before {
 
 .live-crop-box:active {
   cursor: grabbing;
+}
+
+.zoom-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.zoom-buttons button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.zoom-buttons button:hover {
+  background: #f1f5f9;
+}
+
+.zoom-value {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: center;
+}
+
+.inline-duplicate-btn {
+  position: absolute;
+  top: 4px;
+  right: 28px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  color: white;
+  border: none;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.inline-duplicate-btn:hover {
+  background: #4f46e5;
 }
 
 .inline-delete-btn {
@@ -500,58 +565,4 @@ h3::before {
 }
 .inline-delete-btn:hover {
   background: #ef4444;
-}
-
-.zoom-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.zoom-buttons button {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
-  background: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.zoom-buttons button:hover {
-  background: #f1f5f9;
-}
-
-.zoom-value {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  min-width: 36px;
-  text-align: center;
-}
-
-.inline-duplicate-btn {
-  position: absolute;
-  top: 4px;
-  right: 28px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, 0.75);
-  color: white;
-  border: none;
-  font-size: 12px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.inline-duplicate-btn:hover {
-  background: #4f46e5;
 }
