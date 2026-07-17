@@ -1,1 +1,86 @@
+export default function App() {
+  const [spk, setSpk] = useState('');
+  const [initial, setInitial] = useState('');
+  const [sides, setSides] = useState('1');
+  const [finish, setFinish] = useState('GLOSSY');
 
+  const [frontPhotos, setFrontPhotos] = useState([]);
+  const [backPhotos, setBackPhotos] = useState([]);
+  const [generating, setGenerating] = useState(false);
+
+  const frontInputRef = useRef(null);
+  const backInputRef = useRef(null);
+
+  const [dragOverSide, setDragOverSide] = useState(null); // 'front' | 'back' | null
+  const [activeSide, setActiveSide] = useState('front'); // which zone paste (Ctrl+V) targets
+
+  const addPhotos = async (fileList, setPhotos) => {
+    const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
+    for (const file of files) {
+      const src = await readFileAsDataUrl(file);
+      const img = await loadImage(src);
+      const id = nextId++;
+      setPhotos((prev) => [
+        ...prev,
+        {
+          id,
+          src,
+          naturalWidth: img.naturalWidth,
+          naturalHeight: img.naturalHeight,
+          areaPixels: null,
+          zoom: 1,
+          pan: { x: 50, y: 50 },
+        },
+      ]);
+    }
+  };
+
+  // Add a photo directly from a Blob (used for images dragged in from a
+  // webpage, e.g. Pinterest, or pasted from the clipboard).
+  const addPhotoFromBlob = async (blob, setPhotos) => {
+    const src = await readFileAsDataUrl(blob);
+    const img = await loadImage(src);
+    const id = nextId++;
+    setPhotos((prev) => [
+      ...prev,
+      {
+        id,
+        src,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        areaPixels: null,
+        zoom: 1,
+        pan: { x: 50, y: 50 },
+      },
+    ]);
+  };
+
+  const onFrontInputChange = (e) => {
+    addPhotos(e.target.files, setFrontPhotos);
+    e.target.value = '';
+  };
+
+  const onBackInputChange = (e) => {
+    addPhotos(e.target.files, setBackPhotos);
+    e.target.value = '';
+  };
+
+  const handleDragOver = (side) => (e) => {
+    e.preventDefault();
+    setDragOverSide(side);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverSide(null);
+  };
+
+  // Handles both: (1) files dragged from the OS file explorer, and
+  // (2) images dragged directly from a webpage (Pinterest, Google Images,
+  // etc). Case (2) usually arrives as a URL rather than a real file, so we
+  // try to fetch it ourselves — this only works if the source site allows
+  // cross-origin fetches for that image.
+  const handleDrop = (side) => async (e) => {
+    e.preventDefault();
+    setDragOverSide(null);
+    setActiveSide(side);
+    const setPhotos = side === 'front' ? setFrontPhotos : setBackPhotos;
