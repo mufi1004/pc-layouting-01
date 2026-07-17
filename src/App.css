@@ -353,6 +353,22 @@ h3::before {
   text-align: center;
 }
 
+.rotate-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  line-height: 1;
+  margin-left: 4px;
+}
+
+.rotate-btn:hover {
+  background: #f1f5f9;
+}
+
 .inline-duplicate-btn {
   position: absolute;
   top: 4px;
