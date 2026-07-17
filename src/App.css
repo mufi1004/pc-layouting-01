@@ -164,6 +164,15 @@ header p {
   background: #fff1f2;
 }
 
+.upload-zone.active {
+  border-style: solid;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.upload-zone.back.active {
+  box-shadow: 0 0 0 2px #f43f5e;
+}
+
 .upload-zone p {
   margin: 8px 0;
   font-weight: 500;
