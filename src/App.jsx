@@ -260,8 +260,6 @@ export default function App() {
   const backInputRef = useRef(null);
 
   const [dragOverSide, setDragOverSide] = useState(null); // 'front' | 'back' | null
-
-  const [dragOverSide, setDragOverSide] = useState(null); // 'front' | 'back' | null
   const [activeSide, setActiveSide] = useState('front'); // which zone paste (Ctrl+V) targets
 
   const addPhotos = async (fileList, setPhotos) => {
