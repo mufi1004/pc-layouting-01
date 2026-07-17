@@ -261,6 +261,9 @@ export default function App() {
 
   const [dragOverSide, setDragOverSide] = useState(null); // 'front' | 'back' | null
 
+  const [dragOverSide, setDragOverSide] = useState(null); // 'front' | 'back' | null
+  const [activeSide, setActiveSide] = useState('front'); // which zone paste (Ctrl+V) targets
+
   const addPhotos = async (fileList, setPhotos) => {
     const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
     for (const file of files) {
@@ -283,7 +286,7 @@ export default function App() {
   };
 
   // Add a photo directly from a Blob (used for images dragged in from a
-  // webpage, e.g. Pinterest, rather than picked from disk).
+  // webpage, e.g. Pinterest, or pasted from the clipboard).
   const addPhotoFromBlob = async (blob, setPhotos) => {
     const src = await readFileAsDataUrl(blob);
     const img = await loadImage(src);
@@ -329,6 +332,7 @@ export default function App() {
   const handleDrop = (side) => async (e) => {
     e.preventDefault();
     setDragOverSide(null);
+    setActiveSide(side);
     const setPhotos = side === 'front' ? setFrontPhotos : setBackPhotos;
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -352,6 +356,24 @@ export default function App() {
       }
     }
   };
+
+  // Ctrl+V / Cmd+V anywhere on the page pastes into whichever zone was
+  // last clicked or dropped into (activeSide).
+  useEffect(() => {
+    const handlePaste = async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageItem = Array.from(items).find((item) => item.type.startsWith('image/'));
+      if (!imageItem) return;
+      e.preventDefault();
+      const blob = imageItem.getAsFile();
+      if (!blob) return;
+      const setPhotos = activeSide === 'back' ? setBackPhotos : setFrontPhotos;
+      await addPhotoFromBlob(blob, setPhotos);
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [activeSide]);
 
   const makeAdjustHandler = (setPhotos) =>
     useCallback((id, areaPixels, zoom, pan) => {
@@ -452,8 +474,8 @@ export default function App() {
       </div>
 
       <div
-        className={`upload-zone${dragOverSide === 'front' ? ' drag-over' : ''}`}
-        onClick={() => frontInputRef.current.click()}
+        className={`upload-zone${dragOverSide === 'front' ? ' drag-over' : ''}${activeSide === 'front' ? ' active' : ''}`}
+        onClick={() => { setActiveSide('front'); frontInputRef.current.click(); }}
         onDragOver={handleDragOver('front')}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop('front')}
@@ -466,13 +488,13 @@ export default function App() {
           onChange={onFrontInputChange}
           style={{ display: 'none' }}
         />
-        <p>Klik, atau drag & drop foto ke sini (bisa langsung dari Pinterest/web)</p>
+        <p>Klik, drag & drop, atau paste (Ctrl+V) foto ke sini</p>
       </div>
 
       {sides === '2' && (
         <div
-          className={`upload-zone back${dragOverSide === 'back' ? ' drag-over' : ''}`}
-          onClick={() => backInputRef.current.click()}
+          className={`upload-zone back${dragOverSide === 'back' ? ' drag-over' : ''}${activeSide === 'back' ? ' active' : ''}`}
+          onClick={() => { setActiveSide('back'); backInputRef.current.click(); }}
           onDragOver={handleDragOver('back')}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop('back')}
@@ -485,8 +507,12 @@ export default function App() {
             onChange={onBackInputChange}
             style={{ display: 'none' }}
           />
-          <p>Klik, atau drag & drop foto sisi belakang ke sini</p>
-          <p className="hint">Urutan otomatis di-mirror saat di-PDF supaya sejajar dengan sisi depan.</p>
+          <p>Klik, drag & drop, atau paste (Ctrl+V) foto sisi belakang ke sini</p>
+          <p className="hint">
+            {activeSide === 'back'
+              ? 'Zone ini aktif — Ctrl+V akan masuk ke sini.'
+              : 'Urutan otomatis di-mirror saat di-PDF supaya sejajar dengan sisi depan.'}
+          </p>
         </div>
       )}
 
