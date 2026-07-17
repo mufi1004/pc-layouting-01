@@ -26,7 +26,7 @@ function loadImage(src) {
 // A single photocard thumbnail with live pan (drag) + zoom (wheel/slider) adjust.
 // The preview box has the exact 6:9 card aspect ratio, so what's shown here
 // is exactly what ends up in the PDF.
-function LiveCropCard({ photo, onRemove, onDuplicate, onAdjustChange }) {
+function LiveCropCard({ photo, onRemove, onDuplicate, onRotate, onAdjustChange }) {
   const [zoom, setZoom] = useState(photo.zoom ?? 1);
   const [pan, setPan] = useState(photo.pan ?? { x: 50, y: 50 });
   const boxRef = useRef(null);
@@ -161,6 +161,15 @@ const ZOOM_STEP = 0.1;
         >
           +
         </button>
+        <button
+          type="button"
+          className="rotate-btn"
+          onClick={(e) => { e.stopPropagation(); onRotate(photo.id); }}
+          onPointerDown={(e) => e.stopPropagation()}
+          title="Putar 90°"
+        >
+          ⟳
+        </button>
       </div>
     </div>
   );
@@ -182,6 +191,50 @@ function PhotoGrid({ photos, setPhotos, onAdjustChange }) {
       const next = [...prev];
       next.splice(index + 1, 0, copy);
       return next;
+    });
+  };
+
+  // Rotates the photo 90° clockwise by actually redrawing the pixels onto
+  // a rotated canvas (rather than a CSS transform), so the on-screen crop
+  // box and the final PDF export always agree. Zoom/pan reset afterwards
+  // since the old crop no longer makes sense for the new orientation.
+  const rotatePhoto = (id) => {
+    setPhotos((prev) => {
+      const index = prev.findIndex((p) => p.id === id);
+      if (index === -1) return prev;
+      const photo = prev[index];
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalHeight;
+        canvas.height = img.naturalWidth;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+        const rotatedSrc = canvas.toDataURL('image/jpeg', 0.95);
+
+        setPhotos((current) =>
+          current.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  src: rotatedSrc,
+                  naturalWidth: img.naturalHeight,
+                  naturalHeight: img.naturalWidth,
+                  zoom: 1,
+                  pan: { x: 50, y: 50 },
+                  areaPixels: null,
+                  rotateVersion: (p.rotateVersion || 0) + 1,
+                }
+              : p
+          )
+        );
+      };
+      img.src = photo.src;
+
+      return prev;
     });
   };
 
@@ -221,7 +274,7 @@ function PhotoGrid({ photos, setPhotos, onAdjustChange }) {
                 const globalIndex = pageIdx * PER_PAGE + i;
                 return (
                   <div
-                    key={photo.id}
+                    key={`${photo.id}-${photo.rotateVersion || 0}`}
                     className="grid-item-wrapper"
                     draggable
                     onDragStart={(e) => {
@@ -234,7 +287,13 @@ function PhotoGrid({ photos, setPhotos, onAdjustChange }) {
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(globalIndex)}
                   >
-                    <LiveCropCard photo={photo} onRemove={removePhoto} onDuplicate={duplicatePhoto} onAdjustChange={onAdjustChange} />
+                    <LiveCropCard
+                      photo={photo}
+                      onRemove={removePhoto}
+                      onDuplicate={duplicatePhoto}
+                      onRotate={rotatePhoto}
+                      onAdjustChange={onAdjustChange}
+                    />
                   </div>
                 );
               })}
