@@ -475,7 +475,7 @@ export default function App() {
 
       <div
         className={`upload-zone${dragOverSide === 'front' ? ' drag-over' : ''}${activeSide === 'front' ? ' active' : ''}`}
-        onClick={() => { setActiveSide('front'); frontInputRef.current.click(); }}
+        onClick={() => setActiveSide('front')}
         onDragOver={handleDragOver('front')}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop('front')}
@@ -488,13 +488,20 @@ export default function App() {
           onChange={onFrontInputChange}
           style={{ display: 'none' }}
         />
-        <p>Klik, drag & drop, atau paste (Ctrl+V) foto ke sini</p>
+        <p>Drag & drop, atau paste (Ctrl+V) foto ke sini</p>
+        <button
+          type="button"
+          className="browse-btn"
+          onClick={(e) => { e.stopPropagation(); setActiveSide('front'); frontInputRef.current.click(); }}
+        >
+          Browse File
+        </button>
       </div>
 
       {sides === '2' && (
         <div
           className={`upload-zone back${dragOverSide === 'back' ? ' drag-over' : ''}${activeSide === 'back' ? ' active' : ''}`}
-          onClick={() => { setActiveSide('back'); backInputRef.current.click(); }}
+          onClick={() => setActiveSide('back')}
           onDragOver={handleDragOver('back')}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop('back')}
@@ -507,7 +514,14 @@ export default function App() {
             onChange={onBackInputChange}
             style={{ display: 'none' }}
           />
-          <p>Klik, drag & drop, atau paste (Ctrl+V) foto sisi belakang ke sini</p>
+          <p>Drag & drop, atau paste (Ctrl+V) foto sisi belakang ke sini</p>
+          <button
+            type="button"
+            className="browse-btn"
+            onClick={(e) => { e.stopPropagation(); setActiveSide('back'); backInputRef.current.click(); }}
+          >
+            Browse File
+          </button>
           <p className="hint">
             {activeSide === 'back'
               ? 'Zone ini aktif — Ctrl+V akan masuk ke sini.'
