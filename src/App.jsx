@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import './App.css';
-import { computeCropFromZoomPan, computeBackgroundSize, getCroppedImage } from './cropImage';
+import { computeCropFromZoomPan, getCroppedImage, REF_W, REF_H } from './cropImage';
 import { generatePdf } from './pdfGenerator';
 import { PER_PAGE, COLS, ROWS, FIXED_CODE } from './constants';
 
@@ -23,9 +23,11 @@ function loadImage(src) {
   });
 }
 
-// A single photocard thumbnail with live pan (drag) + zoom (wheel/slider) adjust.
-// The preview box has the exact 6:9 card aspect ratio, so what's shown here
-// is exactly what ends up in the PDF.
+// A single photocard thumbnail with live pan (drag) + zoom (buttons/wheel) + rotate adjust.
+// Crop math for the FINAL exported image always uses a fixed reference
+// size (REF_W x REF_H, same 2:3 ratio) instead of measuring the live DOM
+// box — measuring the DOM was flaky (layout timing, resize, many cards
+// mounting at once) and caused the exported crop to drift from preview.
 function LiveCropCard({ photo, onRemove, onDuplicate, onRotate, onAdjustChange }) {
   const [zoom, setZoom] = useState(photo.zoom ?? 1);
   const [pan, setPan] = useState(photo.pan ?? { x: 50, y: 50 });
@@ -41,14 +43,11 @@ function LiveCropCard({ photo, onRemove, onDuplicate, onRotate, onAdjustChange }
   panRef.current = pan;
 
   const emitChange = useCallback((nextZoom, nextPan) => {
-    const box = boxRef.current;
-    if (!box) return;
-    const rect = box.getBoundingClientRect();
     const areaPixels = computeCropFromZoomPan(
       naturalSize.current.w,
       naturalSize.current.h,
-      rect.width,
-      rect.height,
+      REF_W,
+      REF_H,
       nextZoom,
       nextPan.x,
       nextPan.y
@@ -56,7 +55,6 @@ function LiveCropCard({ photo, onRemove, onDuplicate, onRotate, onAdjustChange }
     onAdjustChange(photo.id, areaPixels, nextZoom, nextPan);
   }, [onAdjustChange, photo.id]);
 
-  // send an initial crop as soon as the card mounts / has real dimensions
   useEffect(() => {
     emitChange(zoom, pan);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,11 +95,10 @@ function LiveCropCard({ photo, onRemove, onDuplicate, onRotate, onAdjustChange }
     e.preventDefault();
     const nextZoom = Math.max(1, Math.min(4, zoomRef.current - e.deltaY * 0.001));
     setZoom(nextZoom);
-    // wheel ticks are infrequent enough to emit directly
     emitChange(nextZoom, panRef.current);
   };
 
-const ZOOM_STEP = 0.1;
+  const ZOOM_STEP = 0.1;
 
   const adjustZoom = (delta) => {
     const nextZoom = Math.max(1, Math.min(4, zoomRef.current + delta));
@@ -109,14 +106,18 @@ const ZOOM_STEP = 0.1;
     emitChange(nextZoom, panRef.current);
   };
 
-  const bgSize = boxRef.current
-    ? computeBackgroundSize(
-        naturalSize.current.w,
-        naturalSize.current.h,
-        boxRef.current.getBoundingClientRect().width,
-        boxRef.current.getBoundingClientRect().height,
-        zoom
-      )
+  // Purely visual — reading the DOM here is safe since it no longer
+  // affects the exported crop math above.
+  const boxRect = boxRef.current ? boxRef.current.getBoundingClientRect() : null;
+  const coverScale = boxRect
+    ? Math.max(boxRect.width / naturalSize.current.w, boxRect.height / naturalSize.current.h)
+    : null;
+  const effectiveScale = coverScale ? coverScale * zoom : null;
+  const bgSize = effectiveScale
+    ? {
+        width: naturalSize.current.w * effectiveScale,
+        height: naturalSize.current.h * effectiveScale,
+      }
     : null;
 
   return (
@@ -194,10 +195,6 @@ function PhotoGrid({ photos, setPhotos, onAdjustChange }) {
     });
   };
 
-  // Rotates the photo 90° clockwise by actually redrawing the pixels onto
-  // a rotated canvas (rather than a CSS transform), so the on-screen crop
-  // box and the final PDF export always agree. Zoom/pan reset afterwards
-  // since the old crop no longer makes sense for the new orientation.
   const rotatePhoto = (id) => {
     setPhotos((prev) => {
       const index = prev.findIndex((p) => p.id === id);
@@ -318,8 +315,8 @@ export default function App() {
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
 
-  const [dragOverSide, setDragOverSide] = useState(null); // 'front' | 'back' | null
-  const [activeSide, setActiveSide] = useState('front'); // which zone paste (Ctrl+V) targets
+  const [dragOverSide, setDragOverSide] = useState(null);
+  const [activeSide, setActiveSide] = useState('front');
 
   const addPhotos = async (fileList, setPhotos) => {
     const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
@@ -342,8 +339,6 @@ export default function App() {
     }
   };
 
-  // Add a photo directly from a Blob (used for images dragged in from a
-  // webpage, e.g. Pinterest, or pasted from the clipboard).
   const addPhotoFromBlob = async (blob, setPhotos) => {
     const src = await readFileAsDataUrl(blob);
     const img = await loadImage(src);
@@ -381,11 +376,6 @@ export default function App() {
     setDragOverSide(null);
   };
 
-  // Handles both: (1) files dragged from the OS file explorer, and
-  // (2) images dragged directly from a webpage (Pinterest, Google Images,
-  // etc). Case (2) usually arrives as a URL rather than a real file, so we
-  // try to fetch it ourselves — this only works if the source site allows
-  // cross-origin fetches for that image.
   const handleDrop = (side) => async (e) => {
     e.preventDefault();
     setDragOverSide(null);
@@ -414,8 +404,6 @@ export default function App() {
     }
   };
 
-  // Ctrl+V / Cmd+V anywhere on the page pastes into whichever zone was
-  // last clicked or dropped into (activeSide).
   useEffect(() => {
     const handlePaste = async (e) => {
       const items = e.clipboardData?.items;
