@@ -47,15 +47,18 @@ header p {
   padding: 16px;
   box-shadow: var(--shadow-sm);
   margin-bottom: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
 }
 
 .form-row {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1 1 160px;
+  max-width: 220px;
+  min-width: 140px;
 }
 
 .form-row label {
@@ -70,6 +73,11 @@ header p {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+  height: 38px;
+  font-family: inherit;
+  background: #fff;
 }
 
 .spk-input {
@@ -78,20 +86,26 @@ header p {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0 10px;
+  height: 38px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .spk-input span {
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .spk-input input {
   border: none;
   padding: 8px 6px;
   flex: 1;
+  min-width: 0;
+  height: auto;
 }
 
 .filename-preview {
-  grid-column: 1 / -1;
+  width: 100%;
   font-family: monospace;
   font-size: 0.8rem;
   color: var(--text-muted);
